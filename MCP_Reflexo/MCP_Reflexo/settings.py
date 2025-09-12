@@ -74,10 +74,18 @@ WSGI_APPLICATION = 'MCP_Reflexo.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'reflexo',   # Nombre de tu base de datos
+        'USER': 'root',          # Usuario MySQL
+        'PASSWORD': '',          # Sin contraseña
+        'HOST': 'localhost',     # Servidor local
+        'PORT': '3306',          # Puerto por defecto
+        'OPTIONS': {
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'"
+        }
     }
 }
+
 
 
 # Password validation
