@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reflexo - Dashboard Clínico</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'clinica/css/dashboard.css' %}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    {% csrf_token %}
+    <div class="dashboard-container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="fas fa-heartbeat"></i>
+                    <span>Reflexo</span>
+                </div>
+            </div>
+            
+            <ul class="sidebar-menu">
+                <li class="menu-item active" data-section="overview">
+                    <i class="fas fa-chart-pie"></i>
+                    <span>Dashboard</span>
+                </li>
+                <li class="menu-item" data-section="patients">
+                    <i class="fas fa-users"></i>
+                    <span>Pacientes</span>
+                </li>
+                <li class="menu-item" data-section="therapists">
+                    <i class="fas fa-user-md"></i>
+                    <span>Terapeutas</span>
+                </li>
+                <li class="menu-item" data-section="appointments">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span>Citas</span>
+                </li>
+                <li class="menu-item" data-section="chatbot">
+                    <i class="fas fa-robot"></i>
+                    <span>Asistente IA</span>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="header">
+                <div class="header-left">
+                    <button class="sidebar-toggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 class="page-title">Dashboard</h1>
+                </div>
+                <div class="header-right">
+                    <div class="user-profile">
+                    <div class="user-avatar" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">
+                        A
+                    </div>
+                    <div class="user-info">
+                        <div class="user-name">Administrador</div>
+                    </div>
+                </div>
+                </div>
+            </header>
+
+            <!-- Content Sections -->
+            <div class="content-wrapper">
+                <!-- Overview Section -->
+                <section id="overview" class="content-section active">
+                    <div class="stats-grid">
+                        <div class="stat-card patients">
+                            <div class="stat-icon patients">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="patients-count">0</h3>
+                                <p>Pacientes Activos</p>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card therapists">
+                            <div class="stat-icon therapists">
+                                <i class="fas fa-user-md"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="therapists-count">0</h3>
+                                <p>Terapeutas</p>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card appointments">
+                            <div class="stat-icon appointments">
+                                <i class="fas fa-calendar-check"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3>0</h3>
+                                <p>Citas Hoy</p>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card revenue">
+                            <div class="stat-icon revenue">
+                                <i class="fas fa-dollar-sign"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3>$0</h3>
+                                <p>Ingresos del Mes</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="charts-section">
+                        <div class="chart-card">
+                            <h3>Actividad Reciente</h3>
+                            <div class="activity-list">
+                                <div class="activity-item">
+                                    <i class="fas fa-user-plus"></i>
+                                    <span>Nuevo paciente registrado: Juan Pérez</span>
+                                    <small>Hace 2 horas</small>
+                                </div>
+                                <div class="activity-item">
+                                    <i class="fas fa-calendar"></i>
+                                    <span>Cita programada con Dr. García</span>
+                                    <small>Hace 4 horas</small>
+                                </div>
+                                <div class="activity-item">
+                                    <i class="fas fa-check-circle"></i>
+                                    <span>Sesión completada con María López</span>
+                                    <small>Hace 6 horas</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Patients Section -->
+                <section id="patients" class="content-section">
+                    <div class="section-header">
+                        <h2>Gestión de Pacientes</h2>
+                        <button class="btn btn-primary" onclick="showCreatePatientModal()">
+                            <i class="fas fa-plus"></i> Nuevo Paciente
+                        </button>
+                    </div>
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Nombre</th>
+                                    <th>Email</th>
+                                    <th>Teléfono</th>
+                                    <th>Fecha Registro</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="patients-table">
+                                <!-- Datos dinámicos -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Therapists Section -->
+                <section id="therapists" class="content-section">
+                    <div class="section-header">
+                        <h2>Gestión de Terapeutas</h2>
+                        <button class="btn btn-primary" onclick="showCreateTherapistModal()">
+                            <i class="fas fa-plus"></i> Nuevo Terapeuta
+                        </button>
+                    </div>
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Nombre</th>
+                                    <th>Email</th>
+                                    <th>Teléfono</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="therapists-table">
+                                <!-- Datos dinámicos -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Appointments Section -->
+                <section id="appointments" class="content-section">
+                    <div class="section-header">
+                        <h2>Gestión de Citas</h2>
+                        <button class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Nueva Cita
+                        </button>
+                    </div>
+                    <div class="appointments-grid">
+                        <div class="appointment-card">
+                            <div class="appointment-time">09:00 AM</div>
+                            <div class="appointment-info">
+                                <h4>Juan Pérez</h4>
+                                <p>Dr. García - Terapia Física</p>
+                            </div>
+                            <div class="appointment-status pending">Pendiente</div>
+                        </div>
+                        <!-- Más citas... -->
+                    </div>
+                </section>
+
+                <!-- Chatbot Section -->
+                <section id="chatbot" class="content-section">
+                    <div class="chatbot-container">
+                        <div class="chatbot-header">
+                            <h2><i class="fas fa-robot"></i> Asistente Inteligente</h2>
+                            <p>Pregúntame sobre pacientes, terapeutas o cualquier gestión clínica</p>
+                        </div>
+                        
+                        <div class="chat-messages" id="chat-messages">
+                            <div class="message bot-message">
+                                <div class="message-avatar">
+                                    <i class="fas fa-robot"></i>
+                                </div>
+                                <div class="message-content">
+                                    ¡Hola! Soy tu asistente inteligente. Puedo ayudarte a crear pacientes, terapeutas, programar citas y más. ¿En qué puedo ayudarte hoy?
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="chat-input-container">
+                            <div class="chat-input-wrapper">
+                                <input type="text" id="chat-input" placeholder="Escribe tu mensaje aquí..." autocomplete="off">
+                                <button id="send-button" class="send-btn">
+                                    <i class="fas fa-paper-plane"></i>
+                                </button>
+                            </div>
+                            <div class="quick-actions">
+                                <button class="quick-btn" onclick="sendQuickMessage('Crear un nuevo paciente')">
+                                    <i class="fas fa-user-plus"></i> Crear Paciente
+                                </button>
+                                <button class="quick-btn" onclick="sendQuickMessage('Crear un nuevo terapeuta')">
+                                    <i class="fas fa-user-md"></i> Crear Terapeuta
+                                </button>
+                                <button class="quick-btn" onclick="sendQuickMessage('Mostrar estadísticas')">
+                                    <i class="fas fa-chart-bar"></i> Estadísticas
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <div id="modal-overlay" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="modal-title">Título</h3>
+                <button class="modal-close" onclick="closeModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="modal-body">
+                <!-- Contenido dinámico -->
+            </div>
+        </div>
+    </div>
+
+    <script src="{% static 'clinica/js/dashboard.js' %}"></script>
+</body>
+</html>

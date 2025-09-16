@@ -1,0 +1,694 @@
+from django.db import models
+from django.utils import timezone
+from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
+from django.conf import settings
+
+# Las tablas que no fueron creadas por que django ya lo tiene creado son:
+    #auth_group
+    #auth_group_permissions
+    #auth_permission
+    #django_admin_log
+    #django_celery_beat_clockedschedule
+    #django_celery_beat_crontabschedule
+    #django_celery_beat_intervalschedule
+    #django_celery_beat_periodictask
+    #django_celery_beat_periodictasks
+    #django_celery_beat_solarschedule
+    #django_celery_results_chordcounter
+    #django_celery_results_groupresult
+    #django_celery_results_taskresult
+    #django_content_type
+    #django_migrations
+    #django_session
+
+#Estas tablas son especiales, son intermediadas para relaciones muchos a muchos(osea con otras tablas :V) :
+    #RoleHasPermission
+    #UserPermission
+    #UserGroup
+
+class AppointmentStatus(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    name = models.CharField(
+        max_length=50,
+        unique=True,
+        db_index=True  # porque en tu SQL hay un índice en name
+    )
+    description = models.TextField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)  # Django maneja automático
+    updated_at = models.DateTimeField(auto_now=True)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = 'appointment_statuses'
+        verbose_name = 'Appointment Status'
+        verbose_name_plural = 'Appointment Statuses'
+    
+    def __str__(self):
+        return f"{self.name}" # Representación legible del objeto - puede ajustarse según necesidad
+    
+from django.db import models
+
+
+class Appointment(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    
+    appointment_date = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)  # se genera automáticamente
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    patient = models.ForeignKey(
+        'patients.Patient',
+        on_delete=models.CASCADE,
+        related_name='appointments'
+    )
+    therapist = models.ForeignKey(
+        'therapists.Therapist',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='appointments'
+    )
+    history = models.ForeignKey(
+        'histories.History',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='appointments'
+    )
+    payment_status = models.ForeignKey(
+        'payment_status.PaymentStatus',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='appointments'
+    )
+    payment_type = models.ForeignKey(
+        'payment_types.PaymentType',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='appointments'
+    )
+
+    ailments = models.CharField(max_length=1000, null=True, blank=True)
+    appointment_status = models.CharField(max_length=20, db_index=True)
+    appointment_type = models.CharField(max_length=255, null=True, blank=True)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+    diagnosis = models.CharField(max_length=1000, null=True, blank=True)
+    final_date = models.DateField(null=True, blank=True)
+    hour = models.TimeField(null=True, blank=True)
+    initial_date = models.DateField(null=True, blank=True)
+    medications = models.CharField(max_length=255, null=True, blank=True)
+    observation = models.CharField(max_length=255, null=True, blank=True)
+    payment = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
+    payment_detail = models.CharField(max_length=255, null=True, blank=True)
+    reflexology_diagnostics = models.CharField(max_length=1000, null=True, blank=True)
+    room = models.IntegerField(null=True, blank=True)
+    social_benefit = models.BooleanField()
+    surgeries = models.CharField(max_length=1000, null=True, blank=True)
+    ticket_number = models.CharField(max_length=20, null=True, blank=True, db_index=True)
+
+    class Meta:
+        db_table = 'appointments'
+        verbose_name = 'Appointment'
+        verbose_name_plural = 'Appointments'
+        indexes = [
+            models.Index(fields=['appointment_date', 'hour'], name='appointment_date_hour_idx'),
+        ]
+    
+    def __str__(self):
+        return f"{self.ticket_number}" # Representación legible del objeto - puede ajustarse según necesidad
+    
+class Country(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    name = models.CharField(max_length=255)
+    phone_code = models.CharField(max_length=10, null=True, blank=True)
+    ISO2 = models.CharField(max_length=2, unique=True, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)  # se setea al crear
+    updated_at = models.DateTimeField(auto_now=True)      # se actualiza al guardar
+    deleted_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = 'countries'
+        verbose_name = 'Country'
+        verbose_name_plural = 'Countries'
+
+    def __str__(self):
+        return self.name # Representación legible del objeto - puede ajustarse según necesidad
+    
+class Diagnosis(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    code = models.CharField(max_length=255, unique=True)
+    name = models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True)  # se setea al crear
+    updated_at = models.DateTimeField(auto_now=True)      # se actualiza al guardar
+    deleted_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = 'diagnoses'
+        verbose_name = 'Diagnosis'
+        verbose_name_plural = 'Diagnoses'
+
+    def __str__(self):
+        return f"{self.code} - {self.name}" # Representación legible del objeto - puede ajustarse según necesidad
+
+class DocumentType(models.Model):
+    name = models.CharField(
+        max_length=50,
+        unique=True
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True
+    )
+    deleted_at = models.DateTimeField(
+        null=True,
+        blank=True
+    )
+
+    class Meta:
+        db_table = "document_types"
+        verbose_name = "Document Type"
+        verbose_name_plural = "Document Types"
+
+    def __str__(self):
+        return self.name # Representación legible del objeto - puede ajustarse según necesidad
+    
+class History(models.Model):
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True
+    )
+    deleted_at = models.DateTimeField(
+        null=True,
+        blank=True
+    )
+    diu_type = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True
+    )
+    gestation = models.BooleanField()
+    height = models.DecimalField(
+        max_digits=7,
+        decimal_places=3,
+        null=True,
+        blank=True
+    )
+    last_weight = models.DecimalField(
+        max_digits=6,
+        decimal_places=3,
+        null=True,
+        blank=True
+    )
+    menstruation = models.BooleanField()
+    observation = models.TextField(
+        null=True,
+        blank=True
+    )
+    patient = models.ForeignKey(
+        "Patient",  # referencia a modelo patients
+        on_delete=models.CASCADE,
+        related_name="histories"
+    )
+    private_observation = models.TextField(
+        null=True,
+        blank=True
+    )
+    testimony = models.BooleanField()
+    weight = models.DecimalField(
+        max_digits=6,
+        decimal_places=3,
+        null=True,
+        blank=True
+    )
+
+    class Meta:
+        db_table = "histories"
+        verbose_name = "History"
+        verbose_name_plural = "Histories"
+
+    def __str__(self):
+        return f"History #{self.id} - Patient {self.patient_id}" # Representación legible del objeto - puede ajustarse según necesidad
+    
+class MedicalRecord(models.Model):
+    diagnosis_date = models.DateField()
+    symptoms = models.TextField(
+        null=True,
+        blank=True
+    )
+    treatment = models.TextField(
+        null=True,
+        blank=True
+    )
+    notes = models.TextField(
+        null=True,
+        blank=True
+    )
+    status = models.CharField(
+        max_length=20
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True
+    )
+    deleted_at = models.DateTimeField(
+        null=True,
+        blank=True
+    )
+    diagnose = models.ForeignKey(
+        "Diagnose",   # referencia al modelo diagnoses
+        on_delete=models.CASCADE,
+        related_name="medical_records"
+    )
+    patient = models.ForeignKey(
+        "Patient",   # referencia al modelo patients
+        on_delete=models.CASCADE,
+        related_name="medical_records"
+    )
+
+    class Meta:
+        db_table = "medical_records"
+        verbose_name = "Medical Record"
+        verbose_name_plural = "Medical Records"
+        unique_together = ("patient", "diagnose")
+
+    def __str__(self):
+        return f"MedicalRecord #{self.id} - Patient {self.patient_id}" # Representación legible del objeto - puede ajustarse según necesidad
+    
+class Patient(models.Model):
+    document_number = models.CharField(
+        max_length=20,
+        unique=True
+    )
+    last_name_paternal = models.CharField(
+        max_length=150,
+        null=True,
+        blank=True
+    )
+    last_name_maternal = models.CharField(
+        max_length=150,
+        null=True,
+        blank=True
+    )
+    name = models.CharField(
+        max_length=150
+    )
+    personal_reference = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True
+    )
+    birth_date = models.DateTimeField(
+        null=True,
+        blank=True
+    )
+    gender = models.CharField(
+        max_length=50,
+        null=True,
+        blank=True
+    )
+    phone1 = models.CharField(
+        max_length=20,
+        null=True,
+        blank=True
+    )
+    phone2 = models.CharField(
+        max_length=20,
+        null=True,
+        blank=True
+    )
+    email = models.EmailField(
+        max_length=254
+    )
+    ocupation = models.CharField(
+        max_length=100
+    )
+    health_condition = models.TextField()
+    address = models.TextField(
+        null=True,
+        blank=True
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True
+    )
+    deleted_at = models.DateTimeField(
+        null=True,
+        blank=True
+    )
+    document_type = models.ForeignKey(
+        "DocumentType",
+        on_delete=models.CASCADE,
+        related_name="patients"
+    )
+    district = models.ForeignKey(
+        "District",
+        on_delete=models.CASCADE,
+        related_name="patients"
+    )
+    province = models.ForeignKey(
+        "Province",
+        on_delete=models.CASCADE,
+        related_name="patients"
+    )
+    region = models.ForeignKey(
+        "Region",
+        on_delete=models.CASCADE,
+        related_name="patients"
+    )
+
+    class Meta:
+        db_table = "patients"
+        verbose_name = "Patient"
+        verbose_name_plural = "Patients"
+
+    def __str__(self):
+        return f"{self.name} {self.last_name_paternal or ''} {self.last_name_maternal or ''}".strip() # Representación legible del objeto - puede ajustarse según necesidad
+    
+class PaymentStatus(models.Model):
+    name = models.CharField(
+        max_length=50,
+        unique=True
+    )
+    is_active = models.BooleanField(
+        default=True
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True
+    )
+    deleted_at = models.DateTimeField(
+        null=True,
+        blank=True
+    )
+
+    class Meta:
+        db_table = "payment_status"
+        verbose_name = "Payment Status"
+        verbose_name_plural = "Payment Statuses"
+
+    def __str__(self):
+        return self.name # Representación legible del objeto - puede ajustarse según necesidad
+    
+class PaymentType(models.Model):
+    name = models.CharField(
+        max_length=50,
+        unique=True
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True
+    )
+    deleted_at = models.DateTimeField(
+        null=True,
+        blank=True
+    )
+
+    class Meta:
+        db_table = "payment_types"
+        verbose_name = "Payment Type"
+        verbose_name_plural = "Payment Types"
+
+    def __str__(self):
+        return self.name # Representación legible del objeto - puede ajustarse según necesidad
+    
+class Permission(models.Model):
+    name = models.CharField(
+        max_length=255
+    )
+    detail = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True
+    )
+    guard_name = models.CharField(
+        max_length=255
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True
+    )
+
+    class Meta:
+        db_table = "permissions"
+        verbose_name = "Permission"
+        verbose_name_plural = "Permissions"
+
+    def __str__(self):
+        return self.name # Representación legible del objeto - puede ajustarse según necesidad
+    
+class PredeterminedPrice(models.Model):
+    name = models.CharField(
+        max_length=100
+    )
+    price = models.DecimalField(
+        max_digits=8,
+        decimal_places=2
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True
+    )
+    deleted_at = models.DateTimeField(
+        null=True,
+        blank=True
+    )
+
+    class Meta:
+        db_table = "predetermined_prices"
+        verbose_name = "Predetermined Price"
+        verbose_name_plural = "Predetermined Prices"
+
+    def __str__(self):
+        return f"{self.name} - {self.price}" # Representación legible del objeto - puede ajustarse según necesidad
+    
+class Province(models.Model):
+    name = models.CharField(max_length=255)
+    created_at = models.DateTimeField()
+    updated_at = models.DateTimeField()
+    deleted_at = models.DateTimeField(null=True, blank=True)
+    region = models.ForeignKey(
+        "Region",  # referencia a la tabla regions
+        on_delete=models.CASCADE,
+        related_name="provinces"
+    )
+
+    class Meta:
+        db_table = "provinces"
+        verbose_name = "Province"
+        verbose_name_plural = "Provinces"
+
+    def __str__(self):
+        return self.name # Representación legible del objeto - puede ajustarse según necesidad
+    
+class Region(models.Model):
+    name = models.CharField(max_length=255)
+    created_at = models.DateTimeField()
+    updated_at = models.DateTimeField()
+    deleted_at = models.DateTimeField(null=True, blank=True)
+    country = models.ForeignKey(
+        "Country",  # referencia a la tabla countries
+        on_delete=models.CASCADE,
+        related_name="regions"
+    )
+
+    class Meta:
+        db_table = "regions"
+        verbose_name = "Region"
+        verbose_name_plural = "Regions"
+
+    def __str__(self):
+        return self.name # Representación legible del objeto - puede ajustarse según necesidad
+    
+from django.db import models
+
+class RoleHasPermission(models.Model):
+    permission = models.ForeignKey(
+        "Permission",
+        on_delete=models.CASCADE,
+        related_name="role_permissions"
+    )
+    role = models.ForeignKey(
+        "Role",
+        on_delete=models.CASCADE,
+        related_name="permission_roles"
+    )
+
+    class Meta:
+        db_table = "role_has_permissions"
+        unique_together = ("permission", "role")
+        verbose_name = "Role Permission"
+        verbose_name_plural = "Role Permissions"
+
+    def __str__(self):
+        return f"{self.role} → {self.permission}"
+    
+class Role(models.Model):
+    name = models.CharField(max_length=255, null=True, blank=True)
+    guard_name = models.CharField(max_length=255, null=True, blank=True)
+    created_at = models.DateTimeField()
+    updated_at = models.DateTimeField()
+
+    def __str__(self):
+        return self.name or f"Role {self.id}" # Representación legible del objeto - puede ajustarse según necesidad
+    
+class CompanyData(models.Model):
+    company_name = models.CharField(max_length=266)
+    company_logo = models.CharField(max_length=100, null=True, blank=True)
+    created_at = models.DateTimeField()
+    updated_at = models.DateTimeField()
+
+    def __str__(self):
+        return self.company_name # Representación legible del objeto - puede ajustarse según necesidad
+    
+class Therapist(models.Model):
+    document_number = models.CharField(max_length=20, unique=True)
+    last_name_paternal = models.CharField(max_length=150)
+    last_name_maternal = models.CharField(max_length=150)
+    first_name = models.CharField(max_length=150)
+    birth_date = models.DateTimeField(null=True, blank=True)
+    gender = models.CharField(max_length=50, null=True, blank=True)
+    personal_reference = models.CharField(max_length=255, null=True, blank=True)
+    is_active = models.BooleanField(default=True)
+    phone = models.CharField(max_length=20, null=True, blank=True)
+    email = models.EmailField(max_length=254)
+    address = models.TextField(null=True, blank=True)
+    profile_picture = models.CharField(max_length=255, null=True, blank=True)
+    created_at = models.DateTimeField()
+    updated_at = models.DateTimeField()
+    deleted_at = models.DateTimeField(null=True, blank=True)
+
+    document_type = models.ForeignKey("DocumentType", on_delete=models.CASCADE)
+    district = models.ForeignKey("District", on_delete=models.CASCADE)
+    province = models.ForeignKey("Province", on_delete=models.CASCADE)
+    region = models.ForeignKey("Region", on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"{self.first_name} {self.last_name_paternal} {self.last_name_maternal}" # Representación legible del objeto - puede ajustarse según necesidad
+
+class Ticket(models.Model):
+    ticket_number = models.CharField(max_length=50, unique=True)
+    payment_date = models.DateTimeField()
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    payment_method = models.CharField(max_length=50)
+    description = models.TextField(null=True, blank=True)
+    status = models.CharField(max_length=20)
+    created_at = models.DateTimeField()
+    updated_at = models.DateTimeField()
+    deleted_at = models.DateTimeField(null=True, blank=True)
+    is_active = models.BooleanField(default=True)
+
+    appointment = models.ForeignKey("Appointment", on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"Ticket {self.ticket_number} - {self.status}" # Representación legible del objeto - puede ajustarse según necesidad
+    
+class UserVerificationCode(models.Model):
+    code = models.CharField(max_length=6)
+    failed_attempts = models.IntegerField()
+    locked_until = models.DateTimeField(null=True, blank=True)
+    expires_at = models.DateTimeField()
+    created_at = models.DateTimeField()
+    updated_at = models.DateTimeField()
+
+    user = models.ForeignKey("User", on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"Verification code {self.code} for User {self.user_id}" # Representación legible del objeto - puede ajustarse según necesidad
+
+class User(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    password = models.CharField(max_length=128)
+    last_login = models.DateTimeField(null=True, blank=True)
+    is_superuser = models.BooleanField()
+    is_staff = models.BooleanField()
+    is_active = models.BooleanField()
+    date_joined = models.DateTimeField()
+
+    email = models.EmailField(unique=True, max_length=254)
+    document_number = models.CharField(
+        max_length=20, unique=True, null=True, blank=True
+    )
+    user_name = models.CharField(max_length=50, unique=True)
+    name = models.CharField(max_length=100)
+    paternal_lastname = models.CharField(max_length=100)
+    maternal_lastname = models.CharField(max_length=100)
+
+    created_at = models.DateTimeField()
+    updated_at = models.DateTimeField()
+    phone = models.CharField(max_length=20, null=True, blank=True)
+
+    class Meta:
+        db_table = "users"
+        verbose_name = "User"
+        verbose_name_plural = "Users"
+
+    def __str__(self):
+        return self.email # Representación legible del objeto - puede ajustarse según necesidad
+    
+class UserGroup(models.Model):
+    id = models.BigAutoField(primary_key=True)
+
+    user = models.ForeignKey(
+        "User",  # referencia al modelo users
+        on_delete=models.CASCADE,
+        db_column="user_id",
+        related_name="user_groups"
+    )
+    group = models.ForeignKey(
+        "auth.Group",  # referencia al modelo de Django auth_group
+        on_delete=models.CASCADE,
+        db_column="group_id",
+        related_name="group_users"
+    )
+
+    class Meta:
+        db_table = "users_groups"
+        unique_together = ("user", "group")
+        verbose_name = "User Group"
+        verbose_name_plural = "Users Groups"
+
+    def __str__(self):
+        return f"{self.user} → {self.group}" # Representación legible del objeto - puede ajustarse según necesidad
+    
+class UserPermission(models.Model):
+    id = models.BigAutoField(primary_key=True)
+
+    user = models.ForeignKey(
+        "User",  # referencia al modelo users
+        on_delete=models.CASCADE,
+        db_column="user_id",
+        related_name="user_permissions"
+    )
+    permission = models.ForeignKey(
+        "auth.Permission",  # referencia al modelo de Django auth_permission
+        on_delete=models.CASCADE,
+        db_column="permission_id",
+        related_name="permission_users"
+    )
+
+    class Meta:
+        db_table = "users_user_permissions"
+        unique_together = ("user", "permission")
+        verbose_name = "User Permission"
+        verbose_name_plural = "Users Permissions"
+
+    def __str__(self):
+        return f"{self.user} → {self.permission}" # Representación legible del objeto - puede ajustarse según necesidad
