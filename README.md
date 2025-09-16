@@ -3,6 +3,15 @@
 Sistema de Gestión Clínica  
 MCP---CLINICA es una plataforma desarrollada con Django para la gestión integral de clínicas y centros de salud, orientada a digitalizar procesos administrativos y médicos.
 
+## 🗂️ Repositorio y Ramas
+
+- **Repositorio:** https://github.com/Jean-snt/MCP---CLINICA
+- **Ramas principales:**
+  - `main`: Rama principal y estable
+  - `cesar`: Rama de desarrollo
+  - `rep_main`: Rama de respaldo/pruebas
+  - `final_de_verdad`: Rama actual de trabajo
+
 ## 🚀 Características Principales
 
 - **Gestión de Pacientes, Consultas y Terapeutas**: Modelos y vistas para registrar y administrar pacientes, consultas, terapeutas y personal médico.
@@ -60,7 +69,7 @@ MCP---CLINICA/
 
 ## 🛠️ Tecnologías y Herramientas
 
-- **Backend**: Django 5.x, Python 3.11+
+- **Backend**: Django 5.x, Python 3.11
 - **Base de datos**: MySQL (configurable en settings)
 - **Frontend**: HTML, CSS, JavaScript (dashboard básico)
 - **Panel de administración**: Django Admin
@@ -124,15 +133,6 @@ python manage.py migrate
 # Crear superusuario
 python manage.py createsuperuser
 ```
-
-## 🗂️ Repositorio y Ramas
-
-- **Repositorio:** https://github.com/Jean-snt/MCP---CLINICA
-- **Ramas principales:**
-  - `main`: Rama principal y estable
-  - `cesar`: Rama de desarrollo
-  - `rep_main`: Rama de respaldo/pruebas
-  - `final_de_verdad`: Rama actual de trabajo
 
 ## 📄 Licencia
 
